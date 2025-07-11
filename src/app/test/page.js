@@ -11,24 +11,24 @@ export default function ThreeViewer() {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Store the current container reference
+    const container = containerRef.current;
+
     // 建立場景、相機、渲染器
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xeeeeee);
 
     const camera = new THREE.PerspectiveCamera(
       75,
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      container.clientWidth / container.clientHeight,
       0.1,
-      1000
+      1000,
     );
     camera.position.set(2, 2, 3);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(
-      containerRef.current.clientWidth,
-      containerRef.current.clientHeight
-    );
-    containerRef.current.appendChild(renderer.domElement);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
 
     // 加入光源
     const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -41,7 +41,7 @@ export default function ThreeViewer() {
     // 載入 glb 模型
     const loader = new GLTFLoader();
     loader.load(
-      "/model.glb", // 確保這個檔案放在 public 資料夾
+      "/model.glb",
       (gltf) => {
         scene.add(gltf.scene);
         animate();
@@ -49,7 +49,7 @@ export default function ThreeViewer() {
       undefined,
       (error) => {
         console.error("載入 glb 模型時出錯：", error);
-      }
+      },
     );
 
     // 加上軌道控制器
@@ -65,20 +65,18 @@ export default function ThreeViewer() {
 
     // 畫面 resize 處理
     const handleResize = () => {
-      if (!containerRef.current) return;
-      camera.aspect =
-        containerRef.current.clientWidth / containerRef.current.clientHeight;
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(
-        containerRef.current.clientWidth,
-        containerRef.current.clientHeight
-      );
+      renderer.setSize(container.clientWidth, container.clientHeight);
     };
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (container && container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
       renderer.dispose();
     };
   }, []);
